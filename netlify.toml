@@ -1,5 +1,5 @@
 [build]
-  command = "dotnet publish FunHtmlGames.csproj -c Release -o publish"
+  command = "mkdir -p obj/Release/net8.0/service-worker/ && dotnet publish FunHtmlGames.csproj -c Release -o publish"
   publish = "publish/wwwroot"
 
 [[redirects]]
