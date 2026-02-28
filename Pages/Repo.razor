@@ -1,0 +1,262 @@
+@page "/repo"
+@using System.Threading
+@using Microsoft.JSInterop
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Repository - Fun.Html.Games</PageTitle>
+
+<div class="repo-container">
+    <!-- GitHub‑style repo header -->
+    <div class="repo-header glass-card">
+        <div class="repo-header-top">
+            <svg class="repo-icon" viewBox="0 0 16 16" width="32" height="32">
+                <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            <div class="repo-title">
+                <h1>Fun.Html.Games / <span class="repo-name">launcher</span></h1>
+                <p class="repo-description">A custom game launcher built with Blazor WebAssembly</p>
+            </div>
+        </div>
+        <div class="repo-actions">
+            <span class="repo-badge">⭐ Star</span>
+            <span class="repo-badge">⑂ Fork</span>
+        </div>
+    </div>
+
+    <!-- GitHub‑style navigation tabs -->
+    <div class="repo-tabs">
+        <a href="#" class="tab active">Code</a>
+        <a href="#" class="tab">Issues <span class="tab-count">@_openIssues</span></a>
+        <a href="#" class="tab">Pull requests <span class="tab-count">3</span></a>
+        <a href="#" class="tab">Projects</a>
+        <a href="#" class="tab">Wiki</a>
+        <a href="#" class="tab">Chat</a>
+    </div>
+
+    <!-- Main content area: file browser + sidebar -->
+    <div class="repo-content">
+        <div class="file-browser glass-card">
+            <div class="file-header">
+                <span>main</span>
+                <span>📁</span>
+            </div>
+            <ul class="file-list">
+                <li><span class="file-icon">📄</span> README.md</li>
+                <li><span class="file-icon">📄</span> index.html</li>
+                <li><span class="file-icon">📁</span> Pages/</li>
+                <li><span class="file-icon">📁</span> Services/</li>
+                <li><span class="file-icon">📄</span> CS_Libraries.cs</li>
+                <li><span class="file-icon">📄</span> FunHtmlGames.csproj</li>
+                <li><span class="file-icon">📄</span> Program.cs</li>
+            </ul>
+        </div>
+
+        <div class="repo-sidebar">
+            <!-- Left column: repo stats (real-time simulated) -->
+            <div class="repo-stats glass-card">
+                <h2>Repository Status</h2>
+                <div class="stat-item">
+                    <span>Commits today:</span>
+                    <span class="stat-value">@_commitsToday</span>
+                </div>
+                <div class="stat-item">
+                    <span>Open issues:</span>
+                    <span class="stat-value">@_openIssues</span>
+                </div>
+                <div class="stat-item">
+                    <span>Stars:</span>
+                    <span class="stat-value">@_stars</span>
+                </div>
+                <div class="stat-item">
+                    <span>Forks:</span>
+                    <span class="stat-value">@_forks</span>
+                </div>
+                <div class="stat-item">
+                    <span>Last updated:</span>
+                    <span class="stat-value">@_lastUpdated</span>
+                </div>
+                <p class="update-note">⏱️ Updates every 5 seconds</p>
+            </div>
+
+            <!-- Right column: active collaborators (real-time simulated) -->
+            <div class="collab-box glass-card">
+                <h2>Active Collaborators</h2>
+                <ul class="collab-list">
+                    @foreach (var user in _activeUsers)
+                    {
+                        <li>
+                            <span class="user-dot"></span>
+                            @user
+                        </li>
+                    }
+                </ul>
+                <p class="update-note">👥 Simulated online users</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Persistent chat (messages stored in IndexedDB) -->
+    <div class="chat-area glass-card">
+        <h2>Team Chat</h2>
+        <div class="chat-messages" id="chatMessages">
+            @foreach (var msg in _messages)
+            {
+                <div class="chat-message">
+                    <strong>@msg.User:</strong> @msg.Text
+                </div>
+            }
+        </div>
+        <div class="chat-input">
+            <input @bind="_newMessage" @bind:event="oninput" placeholder="Type a message..." />
+            <button @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(_newMessage)">Send</button>
+        </div>
+        <p class="update-note">💬 Messages persist in your browser (IndexedDB)</p>
+    </div>
+
+    <button class="btn-primary" @onclick='() => Navigation.NavigateTo("/")'>← Back to Launcher</button>
+</div>
+
+<!-- JavaScript module for IndexedDB message storage -->
+<script>
+    window.repoMessageStore = (() => {
+        const dbName = 'FunHtmlGamesDB';
+        const storeName = 'chatMessages';
+        let db;
+
+        async function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 4);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+            });
+        }
+
+        return {
+            loadMessages: async () => {
+                await openDB();
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            saveMessage: async (user, text) => {
+                await openDB();
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const message = { user, text, timestamp: new Date().toISOString() };
+                await store.add(message);
+                return new Promise((resolve, reject) => {
+                    tx.oncomplete = resolve;
+                    tx.onerror = () => reject(tx.error);
+                });
+            }
+        };
+    })();
+</script>
+
+@code {
+    private Timer? _timer;
+    private Random _rand = new();
+
+    // Repo stats
+    private int _commitsToday = 42;
+    private int _openIssues = 13;
+    private int _stars = 1280;
+    private int _forks = 345;
+    private string _lastUpdated = DateTime.Now.ToString("HH:mm:ss");
+
+    // Active users
+    private List<string> _activeUsers = new() { "DevUser1", "GameMaster", "PixelArtist" };
+
+    // Chat messages
+    private List<ChatMessage> _messages = new();
+    private string _newMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMessages();
+        StartTimer();
+    }
+
+    private async Task LoadMessages()
+    {
+        try
+        {
+            var stored = await JS.InvokeAsync<List<ChatMessage>>("repoMessageStore.loadMessages");
+            _messages = stored ?? new List<ChatMessage>();
+        }
+        catch
+        {
+            _messages = new List<ChatMessage>();
+        }
+    }
+
+    private void StartTimer()
+    {
+        _timer = new Timer(_ =>
+        {
+            UpdateStats();
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private void UpdateStats()
+    {
+        _commitsToday += _rand.Next(0, 3);
+        _openIssues = Math.Max(0, _openIssues + _rand.Next(-1, 2));
+        _stars += _rand.Next(0, 5);
+        _forks += _rand.Next(0, 2);
+        _lastUpdated = DateTime.Now.ToString("HH:mm:ss");
+
+        if (_rand.NextDouble() > 0.7)
+        {
+            var names = new[] { "DevUser1", "GameMaster", "PixelArtist", "CodeNinja", "BugHunter", "Designer" };
+            var count = _rand.Next(2, 5);
+            _activeUsers = names.OrderBy(x => _rand.Next()).Take(count).ToList();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_newMessage)) return;
+        var msg = new ChatMessage { User = "You", Text = _newMessage };
+        _messages.Add(msg);
+        await JS.InvokeVoidAsync("repoMessageStore.saveMessage", "You", _newMessage);
+        _newMessage = "";
+        StateHasChanged();
+
+        // Simulate a reply after a short delay
+        _ = Task.Delay(1000).ContinueWith(async _ =>
+        {
+            var reply = new ChatMessage { User = "Bot", Text = "Thanks for your message!" };
+            _messages.Add(reply);
+            await JS.InvokeVoidAsync("repoMessageStore.saveMessage", "Bot", "Thanks for your message!");
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+
+    private class ChatMessage
+    {
+        public string User { get; set; } = "";
+        public string Text { get; set; } = "";
+    }
+}

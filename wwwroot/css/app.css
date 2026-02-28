@@ -1,0 +1,430 @@
+/* Import Google Font for a modern look */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+html, body {
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #0a0a0f; /* Deep black base */
+    background: radial-gradient(circle at 20% 20%, #1a1a2e, #0a0a0f 80%); /* Subtle purple tint */
+    min-height: 100vh;
+    color: #e0e0ff; /* Soft white with blue hint */
+}
+
+/* Main container for the launcher */
+.page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header area */
+.top-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 0;
+}
+
+.top-row a {
+    color: #a0a0ff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.top-row a:hover {
+    color: #c0c0ff;
+    text-decoration: underline;
+}
+
+/* Main heading */
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 10px rgba(100, 100, 255, 0.3);
+    background: linear-gradient(45deg, #a0a0ff, #c060ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Upload button */
+button {
+    background: rgba(30, 30, 50, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid #4a4a8a;
+    color: white;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    margin-bottom: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+button:hover {
+    background: rgba(50, 50, 80, 0.9);
+    border-color: #6a6aff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(100, 100, 255, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Game grid */
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Game card with glassmorphism */
+.game-card {
+    background: rgba(20, 20, 35, 0.7);
+    backdrop-filter: blur(15px);
+    border: 1px solid #3a3a6a;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: #e0e0ff;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.game-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 48px rgba(100, 100, 255, 0.2);
+    border-color: #6a6aff;
+}
+
+.game-card h4 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    word-break: break-word;
+}
+
+.game-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.game-card p::before {
+    content: "📦";
+    opacity: 0.7;
+}
+
+/* Card buttons container */
+.game-card > div {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.game-card button {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.9rem;
+    background: rgba(30, 30, 50, 0.8);
+    border: 1px solid #4a4a8a;
+    border-radius: 30px;
+    margin: 0;
+}
+
+.game-card button:first-child {
+    background: linear-gradient(45deg, #4a4aff, #8a4aff);
+    border: none;
+    font-weight: 700;
+}
+
+.game-card button:first-child:hover {
+    background: linear-gradient(45deg, #5a5aff, #9a5aff);
+}
+
+/* Launch page styles */
+.launching-message {
+    text-align: center;
+    padding: 4rem;
+    background: rgba(10, 10, 20, 0.8);
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    max-width: 500px;
+    margin: 4rem auto;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 0.8; transform: scale(1); }
+}
+
+.launching-message p {
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+}
+
+.launching-message p:first-child {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+/* Error console styling */
+.error-console {
+    background: rgba(80, 20, 20, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid #ff6a6a;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    color: #ffb0b0;
+}
+
+.error-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.error-item:last-child {
+    border-bottom: none;
+}
+
+.error-item button {
+    background: none;
+    border: none;
+    color: #ffb0b0;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 5px;
+    margin: 0;
+    box-shadow: none;
+}
+
+.error-item button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .page {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 2.5rem;
+    }
+    
+    .game-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .game-card {
+        padding: 1rem;
+    }
+}
+
+/* Loading state */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: 1.2rem;
+    opacity: 0.8;
+    animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* About & Repo pages */
+.about-container, .repo-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.glass-card {
+    background: rgba(15, 15, 25, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid #3a3a6a;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    color: #e0e0ff;
+}
+
+.about-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+}
+
+.about-content code {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.repo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 1.1rem;
+}
+
+.stat-value {
+    font-weight: 700;
+    color: #a0a0ff;
+}
+
+.update-note {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-top: 1rem;
+    font-style: italic;
+}
+
+.collab-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.collab-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-dot {
+    width: 10px;
+    height: 10px;
+    background: #4aff4a;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #4aff4a;
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.chat-area {
+    margin-top: 2rem;
+}
+
+.chat-messages {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+}
+
+.chat-message {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.chat-input {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 30px;
+    border: 1px solid #3a3a6a;
+    background: rgba(20, 20, 35, 0.8);
+    color: #e0e0ff;
+    font-size: 1rem;
+}
+
+.chat-input input::placeholder {
+    color: #6a6a9a;
+}
+
+.chat-input button {
+    padding: 10px 20px;
+    border-radius: 30px;
+    background: linear-gradient(45deg, #4a4aff, #8a4aff);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-input button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: rgba(30, 30, 50, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid #4a4a8a;
+    color: white;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 2rem;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    background: rgba(50, 50, 80, 0.9);
+    border-color: #6a6aff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(100, 100, 255, 0.3);
+}

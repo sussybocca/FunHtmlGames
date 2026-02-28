@@ -1,0 +1,166 @@
+@page "/"
+@using System.Text.Json
+@inject GameManager GameManager
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<style>
+    .error-console {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 20px;
+        color: #721c24;
+    }
+    .error-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f5c6cb;
+    }
+    .error-item:last-child {
+        border-bottom: none;
+    }
+    .error-item button {
+        background: none;
+        border: none;
+        color: #721c24;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    .game-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .game-card {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        border-radius: 8px;
+        width: 200px;
+    }
+</style>
+
+<h1>Fun.Html.Games Launcher</h1>
+
+@if (_errors.Any())
+{
+    <div class="error-console">
+        <strong>Errors:</strong>
+        @foreach (var err in _errors)
+        {
+            <div class="error-item">
+                <span>⚠️ @err</span>
+                <button @onclick="() => RemoveError(err)">✖</button>
+            </div>
+        }
+    </div>
+}
+
+<button @onclick="UploadGame">📁 Upload Game Folder</button>
+
+<h3>Your Games</h3>
+@if (_games == null)
+{
+    <p>Loading...</p>
+}
+else if (!_games.Any())
+{
+    <p>No games yet. Upload one!</p>
+}
+else
+{
+    <div class="game-grid">
+        @foreach (var game in _games)
+        {
+            <div class="game-card">
+                <h4>@game.Name</h4>
+                <p>Installed: @(game.IsInstalled ? "✅" : "❌")</p>
+                <button @onclick="() => InstallGame(game.Id)" disabled="@game.IsInstalled">Install</button>
+                <button @onclick="() => LaunchGame(game.Id)">Launch</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<GameInfo>? _games;
+    private List<string> _errors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshGames();
+    }
+
+    private async Task RefreshGames()
+    {
+        try
+        {
+            _games = await GameManager.GetAllGames();
+        }
+        catch (Exception ex)
+        {
+            AddError($"Failed to load games: {ex.Message}");
+        }
+    }
+
+    private async Task UploadGame()
+    {
+        try
+        {
+            var dotNetHelper = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("uploadGameFolder", dotNetHelper);
+        }
+        catch (Exception ex)
+        {
+            AddError($"Upload failed: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnGameFolderUploaded(string gameId, string gameName, List<string> filePaths, List<byte[]> fileContents)
+    {
+        try
+        {
+            await GameManager.AddGameFromUpload(gameId, gameName, filePaths, fileContents);
+            await RefreshGames();
+        }
+        catch (Exception ex)
+        {
+            AddError($"Failed to save uploaded game: {ex.Message}");
+        }
+    }
+
+    private async Task InstallGame(string gameId)
+    {
+        try
+        {
+            await GameManager.InstallGame(gameId);
+            await RefreshGames();
+        }
+        catch (Exception ex)
+        {
+            AddError($"Installation failed: {ex.Message}");
+        }
+    }
+
+    private void LaunchGame(string gameId)
+    {
+        Navigation.NavigateTo($"/launch/{gameId}");
+    }
+
+    private void AddError(string message)
+    {
+        _errors.Add(message);
+        StateHasChanged();
+    }
+
+    private void RemoveError(string error)
+    {
+        _errors.Remove(error);
+        StateHasChanged();
+    }
+}

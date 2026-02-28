@@ -1,0 +1,181 @@
+@page "/launch/{gameId}"
+@using System.Text
+@using System.Text.Json
+@using FunHtmlGames.Services
+@inject GameManager GameManager
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>Launching @_gameName</PageTitle>
+
+<div class="launching-message">
+    <p>Launching game...</p>
+    <p>If the game doesn't open, check pop-up blockers.</p>
+</div>
+
+@code {
+    [Parameter] public string gameId { get; set; } = string.Empty;
+
+    private string _gameName = string.Empty;
+    private Dictionary<string, string>? _windowStyles;
+    private JsonElement? _manifest;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadAndLaunchGame();
+        }
+    }
+
+    private async Task LoadAndLaunchGame()
+    {
+        var game = await GameManager.GetGame(gameId);
+        if (game == null)
+        {
+            await JS.InvokeVoidAsync("alert", "Game not found.");
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        _gameName = game.Name;
+        _windowStyles = game.WindowStyles ?? new Dictionary<string, string>();
+        _manifest = game.Manifest;
+        StateHasChanged();
+
+        // Build window features from styles
+        int width = 800, height = 600;
+        if (_windowStyles.TryGetValue("window-width", out var w) && int.TryParse(w, out var parsedWidth))
+            width = parsedWidth;
+        if (_windowStyles.TryGetValue("window-height", out var h) && int.TryParse(h, out var parsedHeight))
+            height = parsedHeight;
+
+        string features = $"width={width},height={height},resizable=yes,scrollbars=yes";
+        if (_windowStyles.TryGetValue("window-features", out var extraFeatures))
+            features += "," + extraFeatures;
+
+        // Generate the HTML for the new window
+        var gameHtml = await GenerateGameHtml(gameId, _windowStyles, _manifest);
+        
+        // Create a blob URL
+        var blobUrl = await JS.InvokeAsync<string>("createBlobUrl", gameHtml, "text/html");
+
+        // Open new window
+        await JS.InvokeVoidAsync("openWindow", blobUrl, "_blank", features);
+
+        // Return to launcher
+        Navigation.NavigateTo("/");
+    }
+
+    private async Task<string> GenerateGameHtml(string gameId, Dictionary<string, string> windowStyles, JsonElement? manifest)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html>");
+        sb.AppendLine("<head>");
+        sb.AppendLine("<meta charset='utf-8'>");
+        sb.AppendLine("<title>Game</title>");
+        
+        // Inject inline styles from .Window and manifest
+        sb.AppendLine("<style>");
+        foreach (var style in windowStyles)
+        {
+            // Skip window control properties
+            if (!style.Key.StartsWith("window-"))
+                sb.AppendLine($"  body {{ {style.Key}: {style.Value}; }}");
+        }
+        if (manifest.HasValue)
+        {
+            if (manifest.Value.TryGetProperty("background_color", out var bg))
+                sb.AppendLine($"  body {{ background-color: {bg}; }}");
+            if (manifest.Value.TryGetProperty("theme_color", out var theme))
+                sb.AppendLine($"  body {{ color: {theme}; }}");
+        }
+        sb.AppendLine("</style>");
+
+        // Service worker registration script (inline)
+        sb.AppendLine("<script>");
+        sb.AppendLine(@"
+            // Service worker that intercepts fetch and serves files from IndexedDB
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                    const gameId = '" + gameId + @"';
+                    self.addEventListener('fetch', event => {
+                        event.respondWith((async () => {
+                            const url = new URL(event.request.url);
+                            // Only handle requests to our scope
+                            if (!url.pathname.startsWith('/game/')) {
+                                return fetch(event.request);
+                            }
+                            const path = url.pathname.substring('/game/'.length);
+                            const db = await new Promise((resolve, reject) => {
+                                const request = indexedDB.open('FunHtmlGamesDB', 4);
+                                request.onsuccess = () => resolve(request.result);
+                                request.onerror = () => reject(request.error);
+                            });
+                            const tx = db.transaction('files', 'readonly');
+                            const store = tx.objectStore('files');
+                            const fileId = `Games/${gameId}/${path}`;
+                            const file = await new Promise((resolve, reject) => {
+                                const req = store.get(fileId);
+                                req.onsuccess = () => resolve(req.result);
+                                req.onerror = () => reject(req.error);
+                            });
+                            if (!file) {
+                                return new Response('Not found', { status: 404 });
+                            }
+                            const blob = new Blob([file.content], { type: getMimeType(path) });
+                            return new Response(blob);
+                        })());
+                    });
+                    function getMimeType(path) {
+                        const ext = path.split('.').pop();
+                        const map = {
+                            'html': 'text/html',
+                            'css': 'text/css',
+                            'js': 'application/javascript',
+                            'json': 'application/json',
+                            'png': 'image/png',
+                            'jpg': 'image/jpeg',
+                            'jpeg': 'image/jpeg',
+                            'gif': 'image/gif',
+                            'svg': 'image/svg+xml'
+                        };
+                        return map[ext] || 'application/octet-stream';
+                    }
+                `)).then(reg => {
+                    console.log('SW registered');
+                }).catch(err => {
+                    console.error('SW registration failed', err);
+                });
+            }
+        ");
+        sb.AppendLine("</script>");
+
+        // Main loader: fetch index.html from service worker and write it
+        sb.AppendLine("<script>");
+        sb.AppendLine(@"
+            (async function() {
+                // Wait for service worker to be ready
+                if (!navigator.serviceWorker.controller) {
+                    await new Promise(resolve => {
+                        navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+                    });
+                }
+                // Fetch index.html via service worker
+                const response = await fetch('/game/index.html');
+                const html = await response.text();
+                document.open();
+                document.write(html);
+                document.close();
+            })();
+        ");
+        sb.AppendLine("</script>");
+        sb.AppendLine("</head>");
+        sb.AppendLine("<body>");
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+
+        return sb.ToString();
+    }
+}

@@ -1,0 +1,31 @@
+@page "/about"
+@inject NavigationManager Navigation
+
+<PageTitle>About - Fun.Html.Games</PageTitle>
+
+<div class="about-container">
+    <h1>About Fun.Html.Games</h1>
+    <div class="about-content glass-card">
+        <p>
+            <strong>Fun.Html.Games</strong> is a custom game launcher built with Blazor WebAssembly.
+            It runs entirely in your browser and stores games in IndexedDB. Upload any HTML5 game folder,
+            and our custom installation system processes your scripts to set up window styles and assets.
+        </p>
+        <p>
+            Games launch in their own custom‑styled windows using window dimensions and styles defined in
+            <code>.Window</code> files. You can even define your own installation logic with
+            <code>custom-installation.txt</code> using our library functions.
+        </p>
+        <p>
+            This launcher is designed for Chromebooks (CWA) and can be installed as a Progressive Web App.
+            No server‑side storage – everything stays on your device.
+        </p>
+        <p>
+            <strong>Version:</strong> 1.0.0<br />
+            <strong>Author:</strong> Fun.Html.Games Team
+        </p>
+        <button class="btn-primary" @onclick='() => Navigation.NavigateTo("/")'>← Back to Launcher</button>
+    </div>
+</div>
+
+@code { }
