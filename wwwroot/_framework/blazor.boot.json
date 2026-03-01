@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "FunHtmlGames",
   "resources": {
-    "hash": "sha256-VngT79iLWenfa1dpyu4L6WUIa6D+QuDWfHR4uR/vHjY=",
+    "hash": "sha256-WS3UmGC8BTLUqdxo4T4HV7qvpPh5hKe5Eejsx/7Dn2A=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-4g0GzvOXSwZvTLca4PrWJkoeltz+V9IF/hEFDcnVros="
     },
@@ -47,7 +47,7 @@
       "System.Text.Json.wasm": "sha256-BSAmGt+e46Pvw6EY4R0HcBV4ZDlkYJ8lzYmwUS31Tjk=",
       "System.Text.RegularExpressions.wasm": "sha256-OiQ2ruqDB0CtzyHWB6THzKsJ9ElacaShTni8VWJ58vk=",
       "System.Private.CoreLib.wasm": "sha256-ilvhBKIG29szPMrRBaUO0K7nDn6ktmiXmYcqq2Bhf/s=",
-      "FunHtmlGames.wasm": "sha256-e4JRYDj9J287hD2Rji0Z9gLaw2wMDikHLqKnGyx4C0U="
+      "FunHtmlGames.wasm": "sha256-BK8t0zq3ulQigOHqWyGe3xFmjd69werQVKS/EgGr3uY="
     }
   },
   "cacheBootResources": true,
